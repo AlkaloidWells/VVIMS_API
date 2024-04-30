@@ -1,16 +1,16 @@
 from flask.json import jsonify
-from src.constants.http_status_codes import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from constants.http_status_codes import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 from flask import Flask, config, redirect
 import os
-from src.api.auth import auth
-from src.api.company import company
-from src.api.employee import employee 
-from src.api.visitor import visitor
-from src.api.vircul import vircul
-from src.model.models import db, init_db
+from api.auth import auth
+from api.company import company
+from api.employee import employee 
+from api.visitor import visitor
+from api.vircul import vircul
+from model.models import db, init_db
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger, swag_from
-from src.config.swaga import template, swagger_config
+from config.swaga import template, swagger_config
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -59,4 +59,7 @@ def create_app(test_config=None):
 
     return app
 
+if __name__ == '__main__':
+    app =create_app
+    app.run(debug=True, host="0.0.0.0",port=5000)
 

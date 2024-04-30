@@ -1,8 +1,8 @@
 from functools import wraps
 from flask import abort
-from src.model.models import User  # Import your User model here
+from model.models import User  # Import your User model here
 from flask_jwt_extended import  get_jwt_identity
-from src.constants.http_status_codes import HTTP_403_FORBIDDEN
+from constants.http_status_codes import HTTP_403_FORBIDDEN
 from flask import  jsonify
 
 def role_not_allowed(roles):

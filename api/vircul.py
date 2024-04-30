@@ -1,9 +1,9 @@
 from os import access
-from src.constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
+from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.model.models import Company, Vehicle, Employee, db
-from src.utilites.checks import  role_not_allowed
+from model.models import Company, Vehicle, Employee, db
+from utilites.checks import  role_not_allowed
 
 vircul= Blueprint("vircul", __name__, url_prefix="/api/v1/vircul")
 

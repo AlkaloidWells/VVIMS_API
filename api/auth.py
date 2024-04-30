@@ -1,11 +1,11 @@
 from os import access
-from src.constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT
+from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT
 from flask import Blueprint, app, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
-from src.model.models import User, db
-from src.utilites.checks import  role_not_allowed
+from model.models import User, db
+from utilites.checks import  role_not_allowed
 from flasgger import Swagger, swag_from
 
 auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
@@ -13,7 +13,7 @@ auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
 
 @auth.post('/register')
-@swag_from('../docs/auth/register.yaml')
+@swag_from('./docs/auth/register.yaml')
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -55,7 +55,7 @@ def register():
 
 
 @auth.post('/login')
-@swag_from('../docs/auth/login.yaml')
+@swag_from('./docs/auth/login.yaml')
 def login():
     username = request.json.get('username', '')
     password = request.json.get('password', '')

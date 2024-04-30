@@ -1,11 +1,11 @@
 from os import access
-from src.constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND
+from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND
 from flask import Blueprint, app, request, jsonify
 from werkzeug.security import generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.model.models import User, Employee, db
-from src.utilites.checks import  role_not_allowed
+from model.models import User, Employee, db
+from utilites.checks import  role_not_allowed
 
 employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 
