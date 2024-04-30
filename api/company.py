@@ -97,6 +97,7 @@ def register():
 
 @company.get('/all_comp')
 @jwt_required()
+@role_not_allowed(['staff' 'company'])
 def get_all_companies():
     companies = Company.query.all()
     company_list = []
@@ -154,7 +155,7 @@ def get_my_company():
 
 @company.get("/company/<int:id>")
 @jwt_required()
-@role_not_allowed(['staff', "company"])
+@role_not_allowed(['staff', 'company'])
 def get_company(id):
     company = Company.query.get(id)
     if not company:
