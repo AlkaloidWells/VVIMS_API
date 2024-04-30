@@ -8,6 +8,8 @@ This document provides an overview of the endpoints available in the VVIMS (Visi
 
 ## Authentication
 
+**base_dir : /api/v1/auth**
+
 ### Register User
 
 Endpoint: `/register`  
