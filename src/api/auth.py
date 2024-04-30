@@ -5,14 +5,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 from src.model.models import User, db
-from utilites.checks import  role_required
+from src.utilites.checks import  role_required
 
 auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
 
-@auth.get('/')
-def index():
-    return {"user": 'me'}
 
 @auth.post('/register')
 #@swag_from('./docs/auth/register.yaml')
@@ -156,3 +153,4 @@ def delete_user(id):
     db.session.commit()
 
     return jsonify({}), HTTP_204_NO_CONTENT
+

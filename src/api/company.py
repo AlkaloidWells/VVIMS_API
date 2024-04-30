@@ -6,7 +6,7 @@ import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flasgger import swag_from
 from src.model.models import User, Company, db
-from utilites.checks import  role_required
+from src.utilites.checks import  role_required
 
 company = Blueprint("company", __name__, url_prefix="/api/v1/company")
 

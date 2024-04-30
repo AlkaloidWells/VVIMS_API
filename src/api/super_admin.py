@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # import validators
 # from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 # from flasgger import swag_from
-from src.model.models import User, Super_Admin
+from src.utilites.checks import  role_required
 
 sadmin= Blueprint("sadmin", __name__, url_prefix="/api/v1/sadmin")
 

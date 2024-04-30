@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.model.models import User, Employee, db
-from utilites.checks import  role_required
+from src.utilites.checks import  role_required
 
 employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 

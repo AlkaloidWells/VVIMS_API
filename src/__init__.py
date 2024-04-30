@@ -11,7 +11,7 @@ from src.api.vircul import vircul
 from src.model.models import db, init_db
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger, swag_from
-#from src.config.swagger import template, swagger_config
+from src.config.swaga import template, swagger_config
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -47,6 +47,8 @@ def create_app(test_config=None):
     app.register_blueprint(visitor)
     app.register_blueprint(vircul)
 
+
+    Swagger(app, config=swagger_config, template=template)
 
     @app.errorhandler(HTTP_404_NOT_FOUND)
     def handle_404(e):
