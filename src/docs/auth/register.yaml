@@ -1,0 +1,50 @@
+swagger: '2.0'
+info:
+  title: 'Register User API'
+  description: 'Endpoint to register a new user.'
+  version: '1.0'
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - 'Authentication'
+      summary: 'Register a new user'
+      description: 'Register a new user with the provided credentials.'
+      consumes:
+        - 'application/json'
+      produces:
+        - 'application/json'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          required: true
+          schema:
+            type: 'object'
+            properties:
+              username:
+                type: 'string'
+              email:
+                type: 'string'
+              password:
+                type: 'string'
+      responses:
+        201:
+          description: 'User created successfully'
+          schema:
+            type: 'object'
+            properties:
+              message:
+                type: 'string'
+              user:
+                type: 'object'
+                properties:
+                  username:
+                    type: 'string'
+                  email:
+                    type: 'string'
+                  user_role:
+                    type: 'string'
+        400:
+          description: 'Bad request'
+        409:
+          description: 'Conflict - Email or username already exists'
