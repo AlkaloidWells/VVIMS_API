@@ -5,7 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 from src.model.models import User, db
-from src.utilites.checks import  role_required
+from src.utilites.checks import  role_not_allowed
 
 auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
@@ -155,17 +155,11 @@ def delete_user(id):
 
     return jsonify({}), HTTP_204_NO_CONTENT
 
+
 @auth.get("/role")
 @jwt_required()
-@role_required(['sadmin', 'company'])
+@role_not_allowed(['staff'])
 def role():
    current_user = get_jwt_identity()
 
-   user = User.query.filter_by(user_id=current_user, id=id).first()
-
-   if not user:
-       return jsonify({'message': 'Item not found'}), HTTP_404_NOT_FOUND
-
-
-    
-   return jsonify({"me": "my worls"}),
+   return jsonify({"me": "my world"})

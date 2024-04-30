@@ -5,15 +5,15 @@ from werkzeug.security import generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.model.models import User, Employee, db
-from src.utilites.checks import  role_required
+from src.utilites.checks import  role_not_allowed
 
 employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 
 
 
 @employee.post('/register')
-#@swag_from('./docs/auth/register.yaml')
 @jwt_required()
+@role_not_allowed(['staff'])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -84,6 +84,7 @@ def register():
 
 @employee.get('/all_emp')
 @jwt_required()
+@role_not_allowed(['staff', "company"])
 def get_all_employees():
     employees = Employee.query.all()
     employee_list = []
@@ -127,6 +128,7 @@ def get_my_employee():
 
 @employee.get('/com_employees')
 @jwt_required()
+@role_not_allowed(['staff'])
 def get_my_employees():
     current_user_id = get_jwt_identity()
     employees = Employee.query.filter_by(com_id=current_user_id).all()
@@ -156,6 +158,7 @@ def get_my_employees():
 
 @employee.get("/employee/<int:id>")
 @jwt_required()
+@role_not_allowed(['staff'])
 def get_employee(id):
     employee = Employee.query.get(id)
     if not employee:
@@ -173,3 +176,12 @@ def get_employee(id):
 
 
 
+@employee.delete('/delete_comp/<int:vircul_id>')
+def delete_vircul(vircul_id):
+    employee = Employee.query.get(vircul_id)
+    if employee:
+        db.session.delete(employee)
+        db.session.commit()
+        return jsonify({'message': 'Employee deleted successfully'}), HTTP_200_OK
+    else:
+        return jsonify({'message': 'Employee not found'}), HTTP_404_NOT_FOUND

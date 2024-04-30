@@ -5,7 +5,6 @@ import os
 from src.api.auth import auth
 from src.api.company import company
 from src.api.employee import employee 
-from src.api.super_admin import sadmin
 from src.api.visitor import visitor
 from src.api.vircul import vircul
 from src.model.models import db, init_db
@@ -43,7 +42,6 @@ def create_app(test_config=None):
     app.register_blueprint(auth)
     app.register_blueprint(company)
     app.register_blueprint(employee)
-    app.register_blueprint(sadmin)
     app.register_blueprint(visitor)
     app.register_blueprint(vircul)
 

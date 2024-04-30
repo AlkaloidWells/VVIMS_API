@@ -6,7 +6,7 @@ import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flasgger import swag_from
 from src.model.models import User, Company, db
-from src.utilites.checks import  role_required
+from src.utilites.checks import  role_not_allowed
 
 company = Blueprint("company", __name__, url_prefix="/api/v1/company")
 
@@ -17,7 +17,7 @@ company = Blueprint("company", __name__, url_prefix="/api/v1/company")
 @company.post('/register')
 #@swag_from('./docs/auth/register.yaml')
 @jwt_required()
-#@role_required
+@role_not_allowed(['staff', "company"])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -96,6 +96,7 @@ def register():
    
 
 @company.get('/all_comp')
+@jwt_required()
 def get_all_companies():
     companies = Company.query.all()
     company_list = []
@@ -124,6 +125,7 @@ def get_all_companies():
 
 @company.get('/me')
 @jwt_required()
+@role_not_allowed(['staff'])
 def get_my_company():
     current_user_id = get_jwt_identity()
     company = Company.query.filter_by(user_id=current_user_id).first()
@@ -152,6 +154,7 @@ def get_my_company():
 
 @company.get("/company/<int:id>")
 @jwt_required()
+@role_not_allowed(['staff', "company"])
 def get_company(id):
     company = Company.query.get(id)
     if not company:
@@ -171,3 +174,14 @@ def get_company(id):
         'manager_tel': company.manager_tel,
         'manager_email': company.manager_email
     }), HTTP_200_OK
+
+
+@company.delete('/delete_comp/<int:vircul_id>')
+def delete_vircul(vircul_id):
+    company = Company.query.get(vircul_id)
+    if company:
+        db.session.delete(company)
+        db.session.commit()
+        return jsonify({'message': 'Company deleted successfully'}), HTTP_200_OK
+    else:
+        return jsonify({'message': 'Companynot found'}), HTTP_404_NOT_FOUND
