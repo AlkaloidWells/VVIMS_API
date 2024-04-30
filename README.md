@@ -53,54 +53,66 @@ Provide instructions for setting up the project locally.
 ## API Documentation
 
 ### User API
+**base url /api/v1/auth
 
-#### Create User
+Authentication
+Register User
+Endpoint: /register
+Method: POST
+Description: Register a new user with the system.
+Request Body:
 
-- **Endpoint:** `/api/users`
-  - **Method:** POST
-  - **Description:** Creates a new user.
-  - **Parameters:** JSON data containing username, password, role, and image_path.
-  - **Response:** Message indicating successful user creation or error message.
+username (string, required): The username of the user.
+email (string, required): The email address of the user.
+password (string, required): The password of the user.
+User Login
+Endpoint: /login
+Method: POST
+Description: Authenticate a user and generate access and refresh tokens.
+Request Body:
 
-#### Delete User
+username (string, required): The username of the user.
+password (string, required): The password of the user.
+Get Current User
+Endpoint: /me
+Method: GET
+Description: Retrieve details of the currently authenticated user.
+Authorization: JWT token required in the request headers.
 
-- **Endpoint:** `/api/users/<int:user_id>`
-  - **Method:** DELETE
-  - **Description:** Deletes a user with the specified user ID.
-  - **Response:** Message indicating successful user deletion or error message.
+Refresh Access Token
+Endpoint: /token/refresh
+Method: GET
+Description: Refresh the access token using the refresh token.
+Authorization: JWT token required in the request headers.
 
-#### Update User
+User Management
+Get All Users
+Endpoint: /all_users
+Method: GET
+Description: Retrieve details of all users in the system.
+Authorization: JWT token required in the request headers.
 
-- **Endpoint:** `/api/users/<int:user_id>`
-  - **Method:** PUT
-  - **Description:** Updates user information.
-  - **Parameters:** JSON data containing fields to be updated.
-  - **Response:** Message indicating successful user update or error message.
+Get User by ID
+Endpoint: /user/{id}
+Method: GET
+Description: Retrieve details of a specific user by their ID.
+Authorization: JWT token required in the request headers.
 
-### Admin User API
+Delete User
+Endpoint: /{id}
+Method: DELETE
+Description: Delete a user from the system by their ID.
+Authorization: JWT token required in the request headers.
 
-#### Create Admin User
+Role-based Authorization
+Get Role
+Endpoint: /role
+Method: GET
+Description: Retrieve the role of the current user.
+Authorization: JWT token required in the request headers.
+Permissions: Only accessible to users with roles other than 'staff'.
 
-- **Endpoint:** `/api/admin_users`
-  - **Method:** POST
-  - **Description:** Creates a new admin user.
-  - **Parameters:** JSON data containing username, password, role, image_path, company_name, reg_no, founded_date, address, and contact_details.
-  - **Response:** Message indicating successful admin user creation or error message.
-
-#### Delete Admin User
-
-- **Endpoint:** `/api/admin_users/<int:user_id>`
-  - **Method:** DELETE
-  - **Description:** Deletes an admin user with the specified user ID.
-  - **Response:** Message indicating successful admin user deletion or error message.
-
-#### Update Admin User
-
-- **Endpoint:** `/api/admin_users/<int:user_id>`
-  - **Method:** PUT
-  - **Description:** Updates admin user information.
-  - **Parameters:** JSON data containing fields to be updated.
-  - **Response:** Message indicating successful admin user update or error message.
+.
 
 ### Staff User API
 
