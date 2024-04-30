@@ -16,7 +16,7 @@ auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 def register():
     username = request.json['username']
     email = request.json['email']
-    role = request.json['role']
+    role = "sadmin"
     password = request.json['password']
 
     if len(password) < 6:
@@ -46,7 +46,8 @@ def register():
     return jsonify({
         'message': "User created",
         'user': {
-            'username': username, "email": email
+
+            'username': username, "email": email, "user_role":role
         }
 
     }), HTTP_201_CREATED
@@ -154,3 +155,17 @@ def delete_user(id):
 
     return jsonify({}), HTTP_204_NO_CONTENT
 
+@auth.get("/role")
+@jwt_required()
+@role_required(['sadmin', 'company'])
+def role():
+   current_user = get_jwt_identity()
+
+   user = User.query.filter_by(user_id=current_user, id=id).first()
+
+   if not user:
+       return jsonify({'message': 'Item not found'}), HTTP_404_NOT_FOUND
+
+
+    
+   return jsonify({"me": "my worls"}),
