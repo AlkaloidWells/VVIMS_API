@@ -375,3 +375,37 @@ def get_emp_proc(emp_id):
             return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+
+@employee.post('/emp_search')
+def search_employees():
+    try:
+        search_criteria = request.json
+
+        # Build the query dynamically based on the search criteria
+        query = Employee.query
+        for key, value in search_criteria.items():
+            # Check if the value is a substring (for case-insensitive search)
+            query = query.filter(or_(Employee.__dict__[key].ilike(f"%{value}%")))
+
+        employees = query.all()
+
+        if not employees:
+            return jsonify({'message': 'No employees found'}), HTTP_404_NOT_FOUND
+        employee_list = [{
+            'id': employee.id,
+            'full_name': employee.full_name,
+            'staff_email': employee.staff_email,
+            'staff_social_link': employee.staff_social_link,
+            'staff_role': employee.staff_role,
+            'staff_home_address': employee.staff_home_address,
+            'staff_department': employee.staff_department,
+            'image': employee.image,
+            'created_at': employee.created_at.isoformat(),
+            'updated_at': employee.updated_at.isoformat()
+        } for employee in employees]
+
+        return jsonify(employee_list), HTTP_200_OK
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
