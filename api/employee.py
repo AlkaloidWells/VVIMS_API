@@ -10,6 +10,7 @@ from model.models import User, Employee, db
 from utilites.checks import  role_allowed
 from werkzeug.utils import secure_filename
 import os
+from sqlalchemy import or_
 
 employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 

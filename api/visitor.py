@@ -8,6 +8,7 @@ from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from model.models import Visitor_card, Visitor, Employee, com_user, db
 from utilites.checks import  role_allowed
+from sqlalchemy import or_
 
 visitor= Blueprint("visitor", __name__, url_prefix="/api/v1/visitor")
 
@@ -241,3 +242,80 @@ def update_visitor_card(visitor_id):
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
+
+
+
+@visitor.post('/vic_search')
+def search_visitors():
+    try:
+        search_criteria = request.json
+
+        # Build the query dynamically based on the search criteria
+        query = Visitor.query
+        for key, value in search_criteria.items():
+            # Check if the value is a substring (for case-insensitive search)
+            query = query.filter(or_(Visitor.__dict__[key].ilike(f"%{value}%")))
+
+        visitors = query.all()
+
+        if not visitors:
+            return jsonify({'message': 'No visitors found'}),HTTP_404_NOT_FOUND
+
+        visitor_list = [{
+            'id': visitor.id,
+            'com_id': visitor.com_id,
+            'full_name': visitor.full_name,
+            'address': visitor.address,
+            'contact_details': visitor.contact_details,
+            'purpose_of_visit': visitor.purpose_of_visit,
+            'time_in': visitor.time_in.isoformat(),
+            'badge_issued': visitor.badge_issued,
+            'created_at': visitor.created_at.isoformat(),
+            'updated_at': visitor.updated_at.isoformat()
+        } for visitor in visitors]
+
+        return jsonify(visitor_list), HTTP_200_OK
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+@visitor.post('/search_card')
+def search_visitor_cards():
+    try:
+        search_criteria = request.json
+
+        # Build the query dynamically based on the search criteria
+        query = Visitor_card.query
+        for key, value in search_criteria.items():
+            # Check if the value is a substring (for case-insensitive search)
+            query = query.filter(or_(Visitor_card.__dict__[key].ilike(f"%{value}%")))
+
+        visitor_cards = query.all()
+
+        if not visitor_cards:
+            return jsonify({'message': 'No visitor cards found'}), HTTP_404_NOT_FOUND
+
+        visitor_card_list = [{
+            'id': visitor_card.id,
+            'com_id': visitor_card.com_id,
+            'full_name': visitor_card.full_name,
+            'address': visitor_card.address,
+            'contact_details': visitor_card.contact_details,
+            'purpose_of_visit': visitor_card.purpose_of_visit,
+            'time_in': visitor_card.time_in.isoformat(),
+            'badge_issued': visitor_card.badge_issued,
+            'created_at': visitor_card.created_at.isoformat(),
+            'updated_at': visitor_card.updated_at.isoformat(),
+            'surname': visitor_card.surname,
+            'given_name': visitor_card.given_name,
+            'dob': visitor_card.dob.isoformat() if visitor_card.dob else None,
+            'pob': visitor_card.pob,
+            'sex': visitor_card.sex,
+            'proff': visitor_card.proff,
+            'id_card_number': visitor_card.id_card_number
+        } for visitor_card in visitor_cards]
+
+        return jsonify(visitor_card_list), HTTP_200_OK
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR

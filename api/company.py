@@ -11,6 +11,7 @@ from model.models import User, Company, db
 from utilites.checks import  role_allowed
 from werkzeug.utils import secure_filename
 import os
+from sqlalchemy import or_
 
 
 company = Blueprint("company", __name__, url_prefix="/api/v1/company")
@@ -307,7 +308,6 @@ def get_company_logo(comp_id):
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
 
-from sqlalchemy import or_
 
 # API endpoint to search companies by any attribute
 @company.get('/company_search')
