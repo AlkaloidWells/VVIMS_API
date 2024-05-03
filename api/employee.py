@@ -17,7 +17,7 @@ employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 
 @employee.post('/register')
 @jwt_required()
-@role_allowed(['sadmin', 'company'])
+@role_allowed(['company'])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -84,6 +84,80 @@ def register():
             'employee_id': new_employee.com_id
         }
     }), HTTP_201_CREATED
+
+
+
+@employee.post('/register<int:comp_id>')
+@jwt_required()
+@role_allowed(['sadmin'])
+def register_by_id(comp_id):
+    username = request.json['username']
+    email = request.json['email']
+    role = 'staff'
+    password = request.json['password']
+    
+    full_name = request.json['full_name']
+    staff_email = request.json['staff_email']
+    staff_social_link = request.json['staff_social_link']
+    staff_role = request.json['staff_role']
+    staff_home_address = request.json['staff_home_address']
+    staff_department = request.json['staff_department']
+    image_path = request.json.get('image_path')  # Optional field
+
+    if len(password) < 6:
+        return jsonify({'error': "Password is too short"}), HTTP_400_BAD_REQUEST
+
+    if len(username) < 3:
+        return jsonify({'error': "User is too short"}), HTTP_400_BAD_REQUEST
+
+    if not username.isalnum() or " " in username:
+        return jsonify({'error': "Username should be alphanumeric, also no spaces"}), HTTP_400_BAD_REQUEST
+
+    if not validators.email(email):
+        return jsonify({'error': "Email is not valid"}), HTTP_400_BAD_REQUEST
+
+    if User.query.filter_by(email=email).first() is not None:
+        return jsonify({'error': "Email is taken"}), HTTP_409_CONFLICT
+
+    if User.query.filter_by(username=username).first() is not None:
+        return jsonify({'error': "username is taken"}), HTTP_409_CONFLICT
+
+    pwd_hash = generate_password_hash(password)
+ 
+
+    user = User(username=username, password=pwd_hash, email=email, user_role=role)
+    db.session.add(user)
+    db.session.commit()
+
+    new_employee = Employee(
+        user_id=user.id,
+        com_id=comp_id,  # Associate the employee with the current user's employee
+        full_name=full_name,
+        staff_email=staff_email,
+        staff_social_link=staff_social_link,
+        staff_role=staff_role,
+        staff_home_address=staff_home_address,
+        staff_department=staff_department,
+        image_path=image_path
+    )
+    db.session.add(new_employee)
+    db.session.commit()
+
+    return jsonify({
+        'message': "User created",
+        'user': {
+            'username': user.username,
+            'email': user.email,
+            'password': password  # or you can omit this for security reasons
+        },
+        'Employee': {
+            'full_name': new_employee.full_name,
+            'employee_id': new_employee.com_id
+        }
+    }), HTTP_201_CREATED
+
+
+
 
 
 @employee.get('/all_emp')

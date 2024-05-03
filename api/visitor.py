@@ -6,7 +6,7 @@ from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED,
 
 from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from model.models import Visitor_card, Visitor, Employee, db
+from model.models import Visitor_card, Visitor, Employee, com_user, db
 from utilites.checks import  role_allowed
 
 visitor= Blueprint("visitor", __name__, url_prefix="/api/v1/visitor")
@@ -82,15 +82,23 @@ def register_visitor():
         user_id = get_jwt_identity()
 
         # Query company ID associated with the user
-        employee = Employee.query.filter_by(id=user_id).first()
-        if employee:
-            com_id = employee.com_id
+        user_id = get_jwt_identity()
+
+        cum2 = Employee.query.filter_by(id=user_id).first()
+        cum3 = com_user.query.filter_by(id=user_id).first()
+        if cum2:
+            com1_id = cum2.com_id
+        
+        elif cum3:
+            com1_id = cum3.com_id
+
         else:
-            com_id = user_id
+            com1_id = user_id
             
         # Create a new Visitor object
         new_visitor = Visitor(
-            com_id=com_id,
+            user_id = user_id,
+            com_id=com1_id,
             full_name=full_name,
             address=address,
             contact_details=contact_details,

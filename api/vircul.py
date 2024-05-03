@@ -2,7 +2,7 @@ from os import access
 from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from model.models import Company, Vehicle, Employee, db
+from model.models import com_user, Vehicle, Employee, db
 from utilites.checks import  role_allowed
 
 vircul= Blueprint("vircul", __name__, url_prefix="/api/v1/vircul")
@@ -31,13 +31,19 @@ def register():
         user_id = get_jwt_identity()
 
         cum2 = Employee.query.filter_by(id=user_id).first()
+        cum3 = com_user.query.filter_by(id=user_id).first()
         if cum2:
-            com_id = cum2.com_id
+            com1_id = cum2.com_id
+        
+        elif cum3:
+            com1_id = cum3.com_id
+
         else:
-            com_id = user_id
+            com1_id = user_id
             
         new_vehicle = Vehicle(
-            com_no=com_id,
+            user_id= user_id,
+            com_no=com1_id,
             plate_number=plate_number,
             make=make,
             model=model,
@@ -65,7 +71,7 @@ def register():
 @vircul.post('/register/<int:vic_id>')
 @jwt_required()
 @role_allowed(['sadmin'])
-def register(vic_id):
+def register_by_id(vic_id):
     try:
         data = request.get_json()
         required_fields = ['plate_number', 'make', 'model', 'color', 'owner_details', 'entry_time']
@@ -135,6 +141,7 @@ def get_vircul_by_id(vircul_id):
 
 # View All Vehicules
 @vircul.get('/all_vec')
+@role_allowed(['sadmin'])
 def get_all_virculs():
     virculs = Vehicle.query.all()
     vircul_list = []
