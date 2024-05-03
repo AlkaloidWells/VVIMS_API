@@ -1,11 +1,14 @@
 from os import access
-from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT
-from flask import Blueprint, app, request, jsonify
+from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED, 
+                                         HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, 
+                                         HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, 
+                                         HTTP_204_NO_CONTENT)
+from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 from model.models import User, db
-from utilites.checks import  role_not_allowed
+from utilites.checks import  role_allowed
 from flasgger import Swagger, swag_from
 
 auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
@@ -17,7 +20,7 @@ auth = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 def register():
     username = request.json['username']
     email = request.json['email']
-    role = "sadmin"
+    role = request.json['role']
     password = request.json['password']
 
     if len(password) < 6:
@@ -108,6 +111,7 @@ def refresh_users_token():
 
 @auth.get('/all_users')
 @jwt_required()
+@role_allowed(['sadmin'])
 def get_all_users():
     users = User.query.all()
     user_list = []
@@ -126,6 +130,7 @@ def get_all_users():
 
 @auth.get("/user/<int:id>")
 @jwt_required()
+@role_allowed(['sadmin'])
 def get_user(id):
     user = User.query.get(id)
     if not user:
@@ -143,6 +148,7 @@ def get_user(id):
 
 @auth.delete("/<int:id>")
 @jwt_required()
+@role_allowed(['sadmin'])
 def delete_user(id):
     current_user = get_jwt_identity()
 
@@ -159,7 +165,7 @@ def delete_user(id):
 
 @auth.get("/role")
 @jwt_required()
-@role_not_allowed(['staff'])
+@role_allowed(['company'])
 def role():
    current_user = get_jwt_identity()
 

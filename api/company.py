@@ -1,12 +1,17 @@
 from os import access
-from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND
+from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED, 
+                                         HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR , 
+                                         HTTP_409_CONFLICT, HTTP_404_NOT_FOUND)
 from flask import Blueprint, app, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flasgger import swag_from
 from model.models import User, Company, db
-from utilites.checks import  role_not_allowed
+from utilites.checks import  role_allowed
+from werkzeug.utils import secure_filename
+import os
+
 
 company = Blueprint("company", __name__, url_prefix="/api/v1/company")
 
@@ -17,7 +22,7 @@ company = Blueprint("company", __name__, url_prefix="/api/v1/company")
 @company.post('/register')
 #@swag_from('./docs/auth/register.yaml')
 @jwt_required()
-@role_not_allowed(['staff', "company"])
+@role_allowed(['sadmin'])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -54,6 +59,9 @@ def register():
 
     if User.query.filter_by(username=username).first() is not None:
         return jsonify({'error': "username is taken"}), HTTP_409_CONFLICT
+    
+    if Company.query.filter_by(tax_number=tax_number).first() is not None:
+        return jsonify({'error': "company tax_number is taken"}), HTTP_409_CONFLICT
 
     pwd_hash = generate_password_hash(password)
 
@@ -80,7 +88,7 @@ def register():
     db.session.commit()
 
     return jsonify({
-    'message': "User created",
+    'message': "Company Created",
     'user': {
         'username': user.username,
         'email': user.email,
@@ -97,7 +105,7 @@ def register():
 
 @company.get('/all_comp')
 @jwt_required()
-@role_not_allowed(['staff' 'company'])
+@role_allowed(['sadmin'])
 def get_all_companies():
     companies = Company.query.all()
     company_list = []
@@ -126,7 +134,7 @@ def get_all_companies():
 
 @company.get('/me')
 @jwt_required()
-@role_not_allowed(['staff'])
+@role_allowed(['company'])
 def get_my_company():
     current_user_id = get_jwt_identity()
     company = Company.query.filter_by(user_id=current_user_id).first()
@@ -155,7 +163,7 @@ def get_my_company():
 
 @company.get("/company/<int:id>")
 @jwt_required()
-@role_not_allowed(['staff', 'company'])
+@role_allowed(['sadmin'])
 def get_company(id):
     company = Company.query.get(id)
     if not company:
@@ -177,12 +185,123 @@ def get_company(id):
     }), HTTP_200_OK
 
 
-@company.delete('/delete_comp/<int:vircul_id>')
-def delete_vircul(vircul_id):
-    company = Company.query.get(vircul_id)
+@company.delete('/delete_comp/<int:comp_id>')
+@jwt_required()
+@role_allowed(['sadmin', 'company'])
+def delete_emp(emp_id):
+    company = Company.query.get(emp_id)
     if company:
+        user_id = company.user_id
         db.session.delete(company)
         db.session.commit()
-        return jsonify({'message': 'Company deleted successfully'}), HTTP_200_OK
+
+        user = User.query.filter_by(id=user_id).first() 
+
+        if not user:
+            return jsonify({'message': 'User Item  not found'}), HTTP_404_NOT_FOUND
+
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': 'Compay deleted successfully'}), HTTP_200_OK
     else:
-        return jsonify({'message': 'Companynot found'}), HTTP_404_NOT_FOUND
+        return jsonify({'message': 'company not found'}), HTTP_404_NOT_FOUND
+    
+
+
+
+@company.put('/edit_comp/<int:com_id>')
+@company.patch('/edit_comp/<int:com_id>')
+@role_allowed(['sadmin', 'company'])
+@jwt_required()
+def editbookmark(com_id):
+    
+    company = Company.query.filter_by(id=com_id).first()
+
+    if not company:
+        return jsonify({'message': 'Item not found'}), HTTP_404_NOT_FOUND
+
+    company_name = request.json['company_name']
+    industry = request.json['industry']
+    company_size = request.json['company_size']
+    company_email = request.json['company_email']
+    company_address = request.json['company_address']
+    managed_by = request.json['managed_by']
+
+
+    company.company_name = company_name
+    company.industry = industry
+    company.company_size = company_size
+    company.company_email = company_email
+    company.compay_address = company_address
+    company.managed_by = managed_by
+
+
+    db.session.commit()
+
+    return jsonify({
+        'id': company.id,
+        'company name': company.company_name,
+        'tax_number': company.tax_number,
+    }), HTTP_200_OK
+
+
+
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@company.put('/update_image/<int:user_id>')
+@jwt_required()
+@role_allowed(['company'])
+def update_user_image(comp_id):
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}),  HTTP_400_BAD_REQUEST
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}),  HTTP_400_BAD_REQUEST
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Generate a unique filename based on user_id
+            unique_filename = f"user_{comp_id}_{filename}"
+            filepath = os.path.join('uploads', 'company', comp_id, unique_filename)
+            file.save(filepath)
+
+            company = Company.query.get(comp_id)
+            if company:
+                company.image = filepath
+                db.session.commit()
+                return jsonify({'message': 'User image updated successfully'}), HTTP_200_OK
+            else:
+                return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
+        else:
+            return jsonify({'error': 'File type not allowed'}), HTTP_400_BAD_REQUEST,
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+
+
+
+# API endpoint to get user image by ID
+@company.get('/get_com_image/<int:comp_id>')
+@jwt_required()
+def get_company_logo(comp_id):
+    try:
+        # Query the database to get the user by ID
+        company = Company.query.get(comp_id)
+        if company:
+            # Check if the user has an image
+            if company.image:
+                # Return the image file path
+                return jsonify({'image_path': company.image}), HTTP_200_OK
+            else:
+                return jsonify({'message': 'User does not have an image'}), HTTP_404_NOT_FOUND
+        else:
+            return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR

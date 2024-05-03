@@ -7,6 +7,8 @@ from api.company import company
 from api.employee import employee 
 from api.visitor import visitor
 from api.vircul import vircul
+from api.comp_user import user1
+from api.sadmin import sadmin
 from model.models import db, init_db
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger, swag_from
@@ -44,6 +46,8 @@ app.register_blueprint(company)
 app.register_blueprint(employee)
 app.register_blueprint(visitor)
 app.register_blueprint(vircul)
+app.register_blueprint(user1)
+app.register_blueprint(sadmin)
 
 
 Swagger(app, config=swagger_config, template=template)
