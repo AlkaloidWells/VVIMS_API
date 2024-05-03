@@ -7,82 +7,98 @@ This document provides details about the company management endpoints in the VVI
 
 **base url: api/v1/company**
 
-## Company Registration
-
-Endpoint: `/register`  
-Method: POST  
-Description: Register a new company along with an associated user account.  
-Authorization: JWT token required in the request headers.  
-Permissions: Only accessible to users with roles other than 'staff' and 'company'.  
-
-### Request Body Fields:
-- `username` (string): The username for the company's user account.
-- `email` (string): The email address for the company's user account.
-- `password` (string): The password for the company's user account.
-- `company_name` (string): The name of the company.
-- `tax_number` (string): The tax identification number of the company.
-- `industry` (string): The industry of the company.
-- `company_size` (string): The size of the company.
-- `company_tel` (string): The telephone number of the company.
-- `company_email` (string): The email address of the company.
-- `company_gps` (string): The GPS coordinates of the company.
-- `company_address` (string): The address of the company.
-- `managed_by` (string): The name of the manager.
-- `manager_role` (string): The role of the manager.
-- `manager_tel` (string): The telephone number of the manager.
-- `manager_email` (string): The email address of the manager.
-
-## Retrieve All Companies
-
-Endpoint: `/all_comp`  
-Method: GET  
-Description: Retrieve details of all registered companies.  
-Authorization: JWT token required in the request headers.  
-Permissions: Only accessible to users with roles other than 'staff' and 'company'.
-
-### Response Body Fields:
-- `id` (integer): The unique identifier of the company.
-- `company_name` (string): The name of the company.
-- `tax_number` (string): The tax identification number of the company.
-- `industry` (string): The industry of the company.
-- `company_size` (string): The size of the company.
-- `company_tel` (string): The telephone number of the company.
-- `company_email` (string): The email address of the company.
-- `company_gps` (string): The GPS coordinates of the company.
-- `company_address` (string): The address of the company.
-- `managed_by` (string): The name of the manager.
-- `manager_role` (string): The role of the manager.
-- `manager_tel` (string): The telephone number of the manager.
-- `manager_email` (string): The email address of the manager.
-
-## Retrieve My Company
-
-Endpoint: `/me`  
-Method: GET  
-Description: Retrieve details of the company associated with the currently authenticated user.  
-Authorization: JWT token required in the request headers.  
-
-### Response Body Fields:
-- Same as the fields in the "Retrieve All Companies" response.
-
-## Retrieve Company by ID
-
-Endpoint: `/company/{id}`  
-Method: GET  
-Description: Retrieve details of a specific company by its ID.  
-Authorization: JWT token required in the request headers.  
-Permissions: Only accessible to users with roles other than 'staff' and 'company'.
-
-### Response Body Fields:
-- Same as the fields in the "Retrieve All Companies" response.
-
-## Delete Company
-
-Endpoint: `/delete_comp/{id}`  
-Method: DELETE  
-Description: Delete a company from the system by its ID.  
-Permissions: No specific role required.
-
----
-
-This documentation provides a comprehensive overview of the company management endpoints, including the fields expected in the request body and response body for each API.
+## Company Registration Endpoint 
+ 
+### Register Company 
+- **URL:**  /api/v1/company/register  
+- **Method:** POST 
+- **Description:** Register a new company with the provided details. 
+- **Request Body:** 
+  -  username : User's username 
+  -  email : User's email address 
+  -  password : User's password 
+  -  company_name : Company's name 
+  -  tax_number : Company's tax number 
+  -  industry : Company's industry 
+  -  company_size : Company's size 
+  -  company_tel : Company's telephone number 
+  -  company_email : Company's email 
+  -  company_gps : Company's GPS location 
+  -  company_address : Company's address 
+  -  managed_by : Manager's name 
+  -  manager_role : Manager's role 
+  -  manager_tel : Manager's telephone number 
+  -  manager_email : Manager's email 
+- **Response:** 
+  -  HTTP_201_CREATED : Company created successfully 
+  -  HTTP_400_BAD_REQUEST : Bad request due to validation errors 
+  -  HTTP_409_CONFLICT : Email, username, or tax number already taken 
+ 
+## Company Management Endpoints 
+ 
+### Get All Companies 
+- **URL:**  /api/v1/company/all_comp  
+- **Method:** GET 
+- **Description:** Retrieve details of all companies (accessible to super admin). 
+- **Response:** 
+  -  HTTP_200_OK : List of all companies retrieved successfully 
+ 
+### Get My Company 
+- **URL:**  /api/v1/company/me  
+- **Method:** GET 
+- **Description:** Get details of the logged-in user's company. 
+- **Response:** 
+  -  HTTP_200_OK : Company details retrieved successfully 
+  -  HTTP_404_NOT_FOUND : Company not found 
+ 
+### Get Company by ID 
+- **URL:**  /api/v1/company/company/<int:id>  
+- **Method:** GET 
+- **Description:** Retrieve company details by company ID (accessible to super admin). 
+- **Response:** 
+  -  HTTP_200_OK : Company details retrieved successfully 
+  -  HTTP_404_NOT_FOUND : Company not found 
+ 
+### Delete Company 
+- **URL:**  /api/v1/company/delete_comp/<int:comp_id>  
+- **Method:** DELETE 
+- **Description:** Delete a company by ID (accessible to super admin or company role). 
+- **Response:** 
+  -  HTTP_200_OK : Company deleted successfully 
+  -  HTTP_404_NOT_FOUND : Company not found 
+ 
+### Update Company Details 
+- **URL:**  /api/v1/company/edit_comp/<int:com_id>  
+- **Method:** PUT/PATCH 
+- **Description:** Update company details by company ID (accessible to super admin or company role). 
+- **Response:** 
+  -  HTTP_200_OK : Company details updated successfully 
+  -  HTTP_404_NOT_FOUND : Company not found 
+ 
+### Update Company Image 
+- **URL:**  /api/v1/company/update_image/<int:user_id>  
+- **Method:** PUT 
+- **Description:** Update company's image by company ID (accessible to company role). 
+- **Response:** 
+  -  HTTP_200_OK : Company image updated successfully 
+  -  HTTP_400_BAD_REQUEST : No file or selected file error 
+  -  HTTP_404_NOT_FOUND : Company not found 
+  -  HTTP_500_INTERNAL_SERVER_ERROR : Internal server error 
+ 
+### Get Company Image 
+- **URL:**  /api/v1/company/get_com_image/<int:comp_id>  
+- **Method:** GET 
+- **Description:** Get company's image by company ID. 
+- **Response:** 
+  -  HTTP_200_OK : Company image path retrieved successfully 
+  -  HTTP_404_NOT_FOUND : Company does not have an image 
+ 
+### Search Companies 
+- **URL:**  /api/v1/company/company_search  
+- **Method:** GET 
+- **Description:** Search for companies by any attribute (accessible to super admin). 
+- **Response:** 
+  -  HTTP_200_OK : List of companies matching the search criteria 
+  -  HTTP_500_INTERNAL_SERVER_ERROR : Internal server error 
+ 
+This README provides a detailed overview of the company API endpoints and their functionalities. Feel free to expand on each section with additional details if needed.
