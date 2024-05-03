@@ -170,3 +170,26 @@ def role():
    current_user = get_jwt_identity()
 
    return jsonify({"me": "my world"})
+
+
+# API endpoint to change user password
+@auth.put('/change_password/<string:user_email>')
+def change_user_password(user_email):
+    try:
+        data = request.get_json()
+        new_password = data.get('new_password')
+
+        if not new_password:
+            return jsonify({'error': 'New password not provided'}), 400
+
+        user = User.query.filter_by(email=user_email).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Update the user's password
+        user.password = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({'message': 'User password changed successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
