@@ -2,7 +2,7 @@ from os import access
 from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED, 
                                          HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, 
                                          HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, 
-                                         HTTP_204_NO_CONTENT)
+                                         HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR)
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 import validators
@@ -180,16 +180,16 @@ def change_user_password(user_email):
         new_password = data.get('new_password')
 
         if not new_password:
-            return jsonify({'error': 'New password not provided'}), 400
+            return jsonify({'error': 'New password not provided'}), HTTP_400_BAD_REQUEST 
 
         user = User.query.filter_by(email=user_email).first()
         if not user:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND 
 
         # Update the user's password
         user.password = generate_password_hash(new_password)
         db.session.commit()
 
-        return jsonify({'message': 'User password changed successfully'}), 200
+        return jsonify({'message': 'User password changed successfully'}), HTTP_200_OK
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
