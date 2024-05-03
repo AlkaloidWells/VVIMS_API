@@ -246,6 +246,8 @@ def update_visitor_card(visitor_id):
 
 
 @visitor.post('/vic_search')
+@jwt_required()
+@role_allowed(['sadmin', 'company', 'staff', 'user'])
 def search_visitors():
     try:
         search_criteria = request.json
@@ -280,6 +282,8 @@ def search_visitors():
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
 @visitor.post('/search_card')
+@jwt_required()
+@role_allowed(['sadmin', 'company', 'staff', 'user'])
 def search_visitor_cards():
     try:
         search_criteria = request.json

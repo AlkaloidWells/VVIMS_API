@@ -379,6 +379,8 @@ def get_emp_proc(emp_id):
 
 
 @employee.post('/emp_search')
+@jwt_required()
+@role_allowed(['sadmin', 'company', 'staff', 'user'])
 def search_employees():
     try:
         search_criteria = request.json
