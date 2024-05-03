@@ -59,7 +59,7 @@ def register():
 
         return jsonify({
             'message': 'Vehicle created successfully',
-            'com_id': com_id,
+            'com_id': com1_id,
             'plate_number': plate_number,
             'owner_details': owner_details,
             'model': model

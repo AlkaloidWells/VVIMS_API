@@ -16,9 +16,74 @@ import os
 user1 = Blueprint("user1", __name__, url_prefix="/api/v1/user")
 
 
+@user1.post('/register/<int:comp_id>')
+@jwt_required()
+@role_allowed(['sadmin'])
+def register_by_id(comp_id):
+    username = request.json['username']
+    email = request.json['email']
+    role = "user"
+    password = request.json['password']
+
+
+    full_name = request.json['full_name']
+    work_role = request.json['work_role']
+    
+
+    if len(password) < 6:
+        return jsonify({'error': "Password is too short"}), HTTP_400_BAD_REQUEST
+
+    if len(username) < 3:
+        return jsonify({'error': "User is too short"}), HTTP_400_BAD_REQUEST
+
+    if not username.isalnum() or " " in username:
+        return jsonify({'error': "Username should be alphanumeric, also no spaces"}), HTTP_400_BAD_REQUEST
+
+    if not validators.email(email):
+        return jsonify({'error': "Email is not valid"}), HTTP_400_BAD_REQUEST
+
+    if User.query.filter_by(email=email).first() is not None:
+        return jsonify({'error': "Email is taken"}), HTTP_409_CONFLICT
+
+    if User.query.filter_by(username=username).first() is not None:
+        return jsonify({'error': "username is taken"}), HTTP_409_CONFLICT
+
+    pwd_hash = generate_password_hash(password)
+
+    user = User(username=username, password=pwd_hash, email=email, user_role=role)
+    db.session.add(user)
+    db.session.commit()
+
+    current_user_id = get_jwt_identity()  # Get the id of the current user
+    new_user = com_user(
+        user_id = current_user_id,
+        com_id = comp_id,
+        full_name = full_name,
+        work_role = work_role
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({
+        'message': "local user created",
+        'user': {
+
+            'username': username, "email": email, "user_role":role, 'password': password
+        },
+
+        'Local User':{
+            'full_name': full_name,
+            'work_role': work_role
+        }
+
+    }), HTTP_201_CREATED
+
+
+
 @user1.post('/register')
 @jwt_required()
-@role_allowed(['sadmin', 'company'])
+@role_allowed(['company'])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -54,9 +119,10 @@ def register():
     db.session.add(user)
     db.session.commit()
 
+    current_user_id = get_jwt_identity()  # Get the id of the current user
     new_user = com_user(
         user_id = user.id,
-        com_id = com_id,
+        com_id = current_user_id,
         full_name = full_name,
         work_role = work_role
     )
@@ -68,7 +134,7 @@ def register():
         'message': "local user created",
         'user': {
 
-            'username': username, "email": email, "user_role":role
+            'username': username, "email": email, "user_role":role, 'password': password
         },
 
         'Local User':{
@@ -139,6 +205,7 @@ def update_user_image(u_id):
             return jsonify({'error': 'File type not allowed'}), HTTP_400_BAD_REQUEST,
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
 
 
 

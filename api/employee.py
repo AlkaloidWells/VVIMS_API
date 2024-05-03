@@ -87,7 +87,7 @@ def register():
 
 
 
-@employee.post('/register<int:comp_id>')
+@employee.post('/register/<int:comp_id>')
 @jwt_required()
 @role_allowed(['sadmin'])
 def register_by_id(comp_id):
