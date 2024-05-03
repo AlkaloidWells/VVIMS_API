@@ -305,3 +305,49 @@ def get_company_logo(comp_id):
             return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+
+from sqlalchemy import or_
+
+# API endpoint to search companies by any attribute
+@company.get('/company_search')
+@jwt_required()
+@role_allowed(['sadmin'])
+def search_companies():
+    try:
+        query_params = request.args.to_dict()
+
+        # Define the filters based on query parameters
+        filters = []
+        for key, value in query_params.items():
+            filters.append(getattr(Company, key).ilike(f"%{value}%"))
+
+        # Execute the query
+        if filters:
+            companies = Company.query.filter(or_(*filters)).all()
+        else:
+            companies = Company.query.all()
+
+        # Construct the response
+        company_list = [{
+            'id': company.id,
+            'company_name': company.company_name,
+            'tax_number': company.tax_number,
+            'industry': company.industry,
+            'company_size': company.company_size,
+            'company_tel': company.company_tel,
+            'company_email': company.company_email,
+            'company_gps': company.company_gps,
+            'company_address': company.company_address,
+            'managed_by': company.managed_by,
+            'manager_role': company.manager_role,
+            'manager_tel': company.manager_tel,
+            'manager_email': company.manager_email,
+            'image': company.image,
+            'created_at': company.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': company.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        } for company in companies]
+
+        return jsonify(company_list), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
