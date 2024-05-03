@@ -14,6 +14,57 @@ visitor= Blueprint("visitor", __name__, url_prefix="/api/v1/visitor")
 
 
 # Register Visitor API
+@visitor.post('/register/<int:comp_id>')
+@jwt_required()
+@role_allowed(['sadmin'])
+def register_visitor_by_id(comp_id):
+    try:
+        data = request.get_json()
+        full_name = data.get('full_name')
+        address = data.get('address')
+        contact_details = data.get('contact_details')
+        purpose_of_visit = data.get('purpose_of_visit')
+        time_in = data.get('time_in')
+        badge_issued = data.get('badge_issued')
+
+        # Get user ID from JWT token
+        user_id = get_jwt_identity()
+            
+        # Create a new Visitor object
+        new_visitor = Visitor(
+            user_id = user_id,
+            com_id=comp_id,
+            full_name=full_name,
+            address=address,
+            contact_details=contact_details,
+            purpose_of_visit=purpose_of_visit,
+            time_in=time_in,
+            badge_issued=badge_issued
+        )
+
+        db.session.add(new_visitor)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Visitor created successfully',
+            'visitor': {
+                'id': new_visitor.id,
+                'com_id': new_visitor.com_id,
+                'full_name': new_visitor.full_name,
+                'address': new_visitor.address,
+                'contact_details': new_visitor.contact_details,
+                'purpose_of_visit': new_visitor.purpose_of_visit,
+                'time_in': new_visitor.time_in,
+                'badge_issued': new_visitor.badge_issued
+            }
+        }),HTTP_201_CREATED
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+
+
+
+
 @visitor.post('/register')
 @jwt_required()
 @role_allowed(['sadmin', 'company', 'staff', 'user'])
@@ -68,6 +119,8 @@ def register_visitor():
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
 
+
+
 # Delete Visitor API
 @visitor.delete("/delete/<int:visitor_id>")
 @jwt_required()
@@ -92,7 +145,7 @@ def delete_visitor(visitor_id):
 @visitor.put('/update/<int:visitor_id>')
 @jwt_required()
 @role_allowed(['sadmin', 'company', 'staff'])
-def update_visitor(visitor_id):
+def update_visitor_by_id(visitor_id):
     try:
         data = request.get_json()
         visitor = Visitor.query.filter_by(id=visitor_id).first()

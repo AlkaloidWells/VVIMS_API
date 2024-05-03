@@ -10,6 +10,7 @@ vircul= Blueprint("vircul", __name__, url_prefix="/api/v1/vircul")
 
 @vircul.post('/register')
 @jwt_required()
+@role_allowed(['company', 'staff', 'user1'])
 def register():
     try:
         data = request.get_json()
@@ -61,6 +62,54 @@ def register():
         # Handle any exceptions here
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
+@vircul.post('/register/<int:vic_id>')
+@jwt_required()
+@role_allowed(['sadmin'])
+def register(vic_id):
+    try:
+        data = request.get_json()
+        required_fields = ['plate_number', 'make', 'model', 'color', 'owner_details', 'entry_time']
+        for field in required_fields:
+            if field not in data:
+                return {'error': f"Missing required field: {field}"}, HTTP_400_BAD_REQUEST,
+
+        plate_number = data.get('plate_number')
+        make = data.get('make')
+        model = data.get('model')
+        color = data.get('color')
+        owner_details = data.get('owner_details')
+        entry_time = data.get('entry_time')
+        exit_time = data.get('exit_time')
+        flagged_as_suspicious = data.get('flagged_as_suspicious', False)
+
+        user_id = get_jwt_identity()
+          
+        new_vehicle = Vehicle(
+            user_id = user_id,
+            com_no=vic_id,
+            plate_number=plate_number,
+            make=make,
+            model=model,
+            color=color,
+            owner_details=owner_details,
+            entry_time=entry_time,
+            exit_time=exit_time,
+            flagged_as_suspicious=flagged_as_suspicious
+        )
+
+        db.session.add(new_vehicle)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Vehicle created successfully',
+            'com_id': vic_id,
+            'plate_number': plate_number,
+            'owner_details': owner_details,
+            'model': model
+        }), HTTP_201_CREATED
+    except Exception as e:
+        # Handle any exceptions here
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
 # View Vehicule by ID
 @vircul.get('/<int:vircul_id>')
@@ -140,6 +189,7 @@ def update_vircul(vircul_id):
 
 # View Vehicules by Company using com_id
 @vircul.get('/by_company/<int:com_id>')
+@role_allowed(['sadmin', 'company', 'staff', 'user'])
 def get_virculs_by_company(com_id):
     virculs = Vehicle.query.filter_by(com_id=com_id).all()
     if virculs:

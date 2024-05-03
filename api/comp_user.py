@@ -1,5 +1,7 @@
 from os import access
-from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND
+from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED, 
+                                         HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, 
+                                         HTTP_409_CONFLICT, HTTP_404_NOT_FOUND)
 from flask import Blueprint, app, request, jsonify
 from werkzeug.security import  generate_password_hash
 import validators
@@ -7,13 +9,16 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flasgger import swag_from
 from model.models import User, com_user, db
 from utilites.checks import  role_allowed
+from werkzeug.utils import secure_filename
+import os
+
 
 user1 = Blueprint("user1", __name__, url_prefix="/api/v1/user")
 
 
 @user1.post('/register')
 @jwt_required()
-@role_allowed(['usn', 'company'])
+@role_allowed(['sadmin', 'company'])
 def register():
     username = request.json['username']
     email = request.json['email']
@@ -51,6 +56,7 @@ def register():
 
     new_user = com_user(
         user_id = user.id,
+        com_id = com_id,
         full_name = full_name,
         work_role = work_role
     )
@@ -77,7 +83,7 @@ def register():
 
 @user1.delete('/delete_samin/<int:user_id>')
 @jwt_required()
-@role_allowed(['sadmin', 'company'])
+@role_allowed(['sadmin', 'user1'])
 def delete_usn(emp_id):
     us = com_user.query.get(emp_id)
     if us:
@@ -96,3 +102,62 @@ def delete_usn(emp_id):
         return jsonify({'message': 'Local User deleted successfully'}), HTTP_200_OK
     else:
         return jsonify({'message': 'Local User not found'}), HTTP_404_NOT_FOUND
+    
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@user1.put('/update_image/<int:u_id>')
+@jwt_required()
+@role_allowed(['user1'])
+def update_user_image(u_id):
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}),  HTTP_400_BAD_REQUEST
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}),  HTTP_400_BAD_REQUEST
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Generate a unique filename based on user_id
+            unique_filename = f"user_{u_id}_{filename}"
+            filepath = os.path.join('uploads', 'user1', u_id, unique_filename)
+            file.save(filepath)
+
+            user1 = com_user.query.get(u_id)
+            if user1:
+                user1.image = filepath
+                db.session.commit()
+                return jsonify({'message': 'User image updated successfully'}), HTTP_200_OK
+            else:
+                return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
+        else:
+            return jsonify({'error': 'File type not allowed'}), HTTP_400_BAD_REQUEST,
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+
+
+
+
+# API endpoint to get user image by ID
+@user1.get('/get_com_image/<int:u_id>')
+@jwt_required()
+def get_user1_logo(u_id):
+    try:
+        # Query the database to get the user by ID
+        user1 = user1.query.get(u_id)
+        if user1:
+            # Check if the user has an image
+            if user1.image:
+                # Return the image file path
+                return jsonify({'image_path': user1.image}), HTTP_200_OK
+            else:
+                return jsonify({'message': 'User does not have an image'}), HTTP_404_NOT_FOUND
+        else:
+            return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND
+    except Exception as e:
+        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR

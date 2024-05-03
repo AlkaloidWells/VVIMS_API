@@ -102,10 +102,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@sadmin.put('/update_image/<int:user_id>')
+@sadmin.put('/update_image/<int:ad_id>')
 @jwt_required()
 @role_allowed(['sadmin'])
-def update_user_image(comp_id):
+def update_user_image(ad_id):
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file part'}),  HTTP_400_BAD_REQUEST
@@ -117,11 +117,11 @@ def update_user_image(comp_id):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             # Generate a unique filename based on user_id
-            unique_filename = f"user_{comp_id}_{filename}"
-            filepath = os.path.join('uploads', 'sadmin', comp_id, unique_filename)
+            unique_filename = f"user_{ad_id}_{filename}"
+            filepath = os.path.join('uploads', 'sadmin', ad_id, unique_filename)
             file.save(filepath)
 
-            sadmin = Super_Admin.query.get(comp_id)
+            sadmin = Super_Admin.query.get(ad_id)
             if sadmin:
                 sadmin.image = filepath
                 db.session.commit()
@@ -137,12 +137,12 @@ def update_user_image(comp_id):
 
 
 # API endpoint to get user image by ID
-@sadmin.get('/get_com_image/<int:comp_id>')
+@sadmin.get('/get_com_image/<int:ad_id>')
 @jwt_required()
-def get_sadmin_logo(comp_id):
+def get_sadmin_logo(ad_id):
     try:
         # Query the database to get the user by ID
-        sadmin = Super_Admin.query.get(comp_id)
+        sadmin = Super_Admin.query.get(ad_id)
         if sadmin:
             # Check if the user has an image
             if sadmin.image:
