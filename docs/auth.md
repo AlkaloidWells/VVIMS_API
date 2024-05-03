@@ -10,71 +10,87 @@ This document provides an overview of the endpoints available in the VVIMS (Visi
 
 **base_dir : /api/v1/auth**
 
-### Register User
-
-Endpoint: `/register`  
-Method: POST  
-Description: Register a new user with the system.  
-Request Body:
-- `username` (string, required): The username of the user.
-- `email` (string, required): The email address of the user.
-- `password` (string, required): The password of the user.
-
-### User Login
-
-Endpoint: `/login`  
-Method: POST  
-Description: Authenticate a user and generate access and refresh tokens.  
-Request Body:
-- `username` (string, required): The username of the user.
-- `password` (string, required): The password of the user.
-
-### Get Current User
-
-Endpoint: `/me`  
-Method: GET  
-Description: Retrieve details of the currently authenticated user.  
-Authorization: JWT token required in the request headers.
-
-### Refresh Access Token
-
-Endpoint: `/token/refresh`  
-Method: GET  
-Description: Refresh the access token using the refresh token.  
-Authorization: JWT token required in the request headers.
-
-## User Management
-
-### Get All Users
-
-Endpoint: `/all_users`  
-Method: GET  
-Description: Retrieve details of all users in the system.  
-Authorization: JWT token required in the request headers.
-
-### Get User by ID
-
-Endpoint: `/user/{id}`  
-Method: GET  
-Description: Retrieve details of a specific user by their ID.  
-Authorization: JWT token required in the request headers.
-
-### Delete User
-
-Endpoint: `/{id}`  
-Method: DELETE  
-Description: Delete a user from the system by their ID.  
-Authorization: JWT token required in the request headers.
-
-## Role-based Authorization
-
-### Get Role
-Endpoint: `/role`  
-Method: GET  
-Description: Retrieve the role of the current user.  
-Authorization: JWT token required in the request headers.  
-Permissions: Only accessible to users with roles other than 'staff'.
-
----
-
-These are the endpoints available in the VVIMS API along with their descriptions and authorization requirements. Feel free to customize this documentation further based on your project's specific needs.
+## Authentication Endpoints 
+ 
+### Register User 
+- **URL:**  /api/v1/auth/register  
+- **Method:** POST 
+- **Description:** Register a new user with the provided details. 
+- **Request Body:** 
+  -  username : User's username 
+  -  email : User's email address 
+  -  role : User's role 
+  -  password : User's password 
+- **Response:** 
+  -  HTTP_201_CREATED : User created successfully 
+  -  HTTP_400_BAD_REQUEST : Bad request due to validation errors 
+  -  HTTP_409_CONFLICT : Email or username already taken 
+ 
+### Login User 
+- **URL:**  /api/v1/auth/login  
+- **Method:** POST 
+- **Description:** Authenticate user credentials and generate access and refresh tokens. 
+- **Request Body:** 
+  -  username : User's username 
+  -  password : User's password 
+- **Response:** 
+  -  HTTP_200_OK : User logged in successfully 
+  -  HTTP_401_UNAUTHORIZED : Wrong credentials provided 
+ 
+### Get Current User Details 
+- **URL:**  /api/v1/auth/me  
+- **Method:** GET 
+- **Description:** Get details of the currently logged-in user. 
+- **Response:** 
+  -  HTTP_200_OK : User details retrieved successfully 
+ 
+### Refresh User Token 
+- **URL:**  /api/v1/auth/token/refresh  
+- **Method:** GET 
+- **Description:** Refresh the user's access token using the refresh token. 
+- **Response:** 
+  -  HTTP_200_OK : Token refreshed successfully 
+ 
+### Get All Users 
+- **URL:**  /api/v1/auth/all_users  
+- **Method:** GET 
+- **Description:** Retrieve details of all users (only accessible to super admin). 
+- **Response:** 
+  -  HTTP_200_OK : List of all users retrieved successfully 
+ 
+### Get User by ID 
+- **URL:**  /api/v1/auth/user/<int:id>  
+- **Method:** GET 
+- **Description:** Retrieve user details by user ID (only accessible to super admin). 
+- **Response:** 
+  -  HTTP_200_OK : User details retrieved successfully 
+  -  HTTP_404_NOT_FOUND : User not found 
+ 
+### Delete User 
+- **URL:**  /api/v1/auth/<int:id>  
+- **Method:** DELETE 
+- **Description:** Delete a user by ID (only accessible to super admin). 
+- **Response:** 
+  -  HTTP_204_NO_CONTENT : User deleted successfully 
+  -  HTTP_404_NOT_FOUND : User not found 
+ 
+### Get User Role 
+- **URL:**  /api/v1/auth/role  
+- **Method:** GET 
+- **Description:** Get the role of the current user (only accessible to company role). 
+- **Response:** 
+  -  HTTP_200_OK : User role retrieved successfully 
+ 
+### Change User Password 
+- **URL:**  /api/v1/auth/change_password/<string:user_email>  
+- **Method:** PUT 
+- **Description:** Change the password of a user by email address. 
+- **Request Body:** 
+  -  new_password : New password for the user 
+- **Response:** 
+  -  HTTP_200_OK : User password changed successfully 
+  -  HTTP_400_BAD_REQUEST : New password not provided 
+  -  HTTP_404_NOT_FOUND : User not found 
+  -  HTTP_500_INTERNAL_SERVER_ERROR : Internal server error 
+ 
+This README provides a detailed overview of the authentication API endpoints and their functionalities. Feel free to expand on each section with additional details if needed.

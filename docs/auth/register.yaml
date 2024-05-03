@@ -1,50 +1,52 @@
-swagger: '2.0'
+swagger: "2.0"
 info:
-  title: 'Register User API'
-  description: 'Endpoint to register a new user.'
-  version: '1.0'
+  title: "User Registration"
+  description: "API for registering a new user account."
+  version: "1.0.0"
+basePath: "/api/v1"
+tags:
+  - name: "Authentication"
 paths:
-  /api/v1/auth/register:
+  /auth/register:
     post:
       tags:
-        - 'Authentication'
-      summary: 'Register a new user'
-      description: 'Register a new user with the provided credentials.'
+        - "Authentication"
+      summary: "Register a new user account"
       consumes:
-        - 'application/json'
+        - "application/json"
       produces:
-        - 'application/json'
+        - "application/json"
       parameters:
-        - in: 'body'
-          name: 'body'
+        - in: "body"
+          name: "body"
+          description: "User registration details"
           required: true
           schema:
-            type: 'object'
+            type: "object"
+            required:
+              - "username"
+              - "email"
+              - "role"
+              - "password"
             properties:
               username:
-                type: 'string'
+                type: "string"
+                example: "example_user"
               email:
-                type: 'string'
+                type: "string"
+                format: "email"
+                example: "user@example.com"
+              role:
+                type: "string"
+                example: "sadmin"
               password:
-                type: 'string'
+                type: "string"
+                format: "password"
+                example: "password123"
       responses:
         201:
-          description: 'User created successfully'
-          schema:
-            type: 'object'
-            properties:
-              message:
-                type: 'string'
-              user:
-                type: 'object'
-                properties:
-                  username:
-                    type: 'string'
-                  email:
-                    type: 'string'
-                  user_role:
-                    type: 'string'
+          description: "Successfully created a new user account"
         400:
-          description: 'Bad request'
+          description: "Failed to register due to bad request data"
         409:
-          description: 'Conflict - Email or username already exists'
+          description: "Conflict - Email or username already taken"
