@@ -172,7 +172,7 @@ def role():
    return jsonify({"me": "my world"})
 
 
-# API endpoint to change user password
+
 @auth.put('/change_password/<string:user_email>')
 def change_user_password(user_email):
     try:
@@ -186,8 +186,9 @@ def change_user_password(user_email):
         if not user:
             return jsonify({'error': 'User not found'}), HTTP_404_NOT_FOUND 
 
-        # Update the user's password
-        user.password = generate_password_hash(new_password)
+        # Hash the new password before updating
+        hashed_password = generate_password_hash(new_password)
+        user.password = hashed_password
         db.session.commit()
 
         return jsonify({'message': 'User password changed successfully'}), HTTP_200_OK
