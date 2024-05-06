@@ -37,8 +37,8 @@ else:
 
 db.init_app(app)
 
-with app.app_context():
-    init_db()
+#with app.app_context():
+    #init_db()
     
 JWTManager(app)
 app.register_blueprint(auth)
