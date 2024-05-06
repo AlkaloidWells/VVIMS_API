@@ -110,8 +110,8 @@ def refresh_users_token():
 
 
 @auth.get('/all_users')
-@jwt_required()
-@role_allowed(['sadmin'])
+#@jwt_required()
+#@role_allowed(['sadmin'])
 def get_all_users():
     users = User.query.all()
     user_list = []
@@ -130,7 +130,7 @@ def get_all_users():
 
 @auth.get("/user/<int:id>")
 @jwt_required()
-@role_allowed(['sadmin'])
+#@role_allowed(['sadmin'])
 def get_user(id):
     user = User.query.get(id)
     if not user:
@@ -148,7 +148,7 @@ def get_user(id):
 
 @auth.delete("/<int:id>")
 @jwt_required()
-@role_allowed(['sadmin'])
+#@role_allowed(['sadmin'])
 def delete_user(id):
     current_user = get_jwt_identity()
 
