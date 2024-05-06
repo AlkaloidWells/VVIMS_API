@@ -16,6 +16,8 @@ sadmin = Blueprint("sadmin", __name__, url_prefix="/api/v1/sadmin")
 
 
 @sadmin.post('/register')
+@jwt_required()
+@role_allowed(['sadmin'])
 def register():
     username = request.json['username']
     email = request.json['email']
