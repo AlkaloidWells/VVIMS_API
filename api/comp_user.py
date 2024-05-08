@@ -7,7 +7,7 @@ from werkzeug.security import  generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flasgger import swag_from
-from model.models import User, com_user, db
+from model.models import User, com_user, Company, db
 from utilites.checks import  role_allowed
 from werkzeug.utils import secure_filename
 import os
@@ -20,6 +20,12 @@ user1 = Blueprint("user1", __name__, url_prefix="/api/v1/user")
 @jwt_required()
 @role_allowed(['sadmin'])
 def register_by_id(comp_id):
+
+    current_user_id = get_jwt_identity()  # Get the id of the current use
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    if not company:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+    
     username = request.json['username']
     email = request.json['email']
     role = "user"
@@ -54,10 +60,9 @@ def register_by_id(comp_id):
     db.session.add(user)
     db.session.commit()
 
-    current_user_id = get_jwt_identity()  # Get the id of the current user
     new_user = com_user(
         user_id = current_user_id,
-        com_id = comp_id,
+        com_id = company.id,
         full_name = full_name,
         work_role = work_role
     )
@@ -69,7 +74,10 @@ def register_by_id(comp_id):
         'message': "local user created",
         'user': {
 
-            'username': username, "email": email, "user_role":role, 'password': password
+            'username': username, 
+            "email": email, 
+            "user_role":role, 
+            'password': password
         },
 
         'Local User':{
