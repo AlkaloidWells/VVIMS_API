@@ -6,7 +6,7 @@ from flask import Blueprint, app, request, jsonify
 from werkzeug.security import generate_password_hash
 import validators
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from model.models import User, Employee, db
+from model.models import User, Employee, Company, db
 from utilites.checks import  role_allowed
 from werkzeug.utils import secure_filename
 import os
@@ -20,6 +20,10 @@ employee = Blueprint("employee", __name__, url_prefix="/api/v1/employee")
 @jwt_required()
 @role_allowed(['company'])
 def register():
+    current_user_id = get_jwt_identity()
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    if not company:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
     username = request.json['username']
     email = request.json['email']
     role = 'staff'
@@ -31,7 +35,7 @@ def register():
     staff_role = request.json['staff_role']
     staff_home_address = request.json['staff_home_address']
     staff_department = request.json['staff_department']
-    image_path = request.json.get('image_path')  # Optional field
+    image = request.json.get('image')  # Optional field
 
     if len(password) < 6:
         return jsonify({'error': "Password is too short"}), HTTP_400_BAD_REQUEST
@@ -53,11 +57,12 @@ def register():
 
     pwd_hash = generate_password_hash(password)
 
-    current_user_id = get_jwt_identity()  # Get the id of the current user
+      # Get the id of the current user
 
     user = User(username=username, password=pwd_hash, email=email, user_role=role)
     db.session.add(user)
     db.session.commit()
+    
 
     new_employee = Employee(
         user_id=user.id,
@@ -68,11 +73,11 @@ def register():
         staff_role=staff_role,
         staff_home_address=staff_home_address,
         staff_department=staff_department,
-        image_path=image_path
+        image=image
     )
     db.session.add(new_employee)
     db.session.commit()
-
+    
     return jsonify({
         'message': "User created",
         'user': {
@@ -82,7 +87,8 @@ def register():
         },
         'Employee': {
             'full_name': new_employee.full_name,
-            'employee_id': new_employee.com_id
+            'employee_id':new_employee.id,
+            'company_tax_number': company.tax_number  # Include the company tax number here
         }
     }), HTTP_201_CREATED
 
@@ -92,6 +98,11 @@ def register():
 @jwt_required()
 @role_allowed(['sadmin'])
 def register_by_id(comp_id):
+    # Check if company exists
+    company = Company.query.get(comp_id)
+    if not company:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+
     username = request.json['username']
     email = request.json['email']
     role = 'staff'
@@ -103,7 +114,7 @@ def register_by_id(comp_id):
     staff_role = request.json['staff_role']
     staff_home_address = request.json['staff_home_address']
     staff_department = request.json['staff_department']
-    image_path = request.json.get('image_path')  # Optional field
+    image= request.json.get('image')  # Optional field
 
     if len(password) < 6:
         return jsonify({'error': "Password is too short"}), HTTP_400_BAD_REQUEST
@@ -139,11 +150,10 @@ def register_by_id(comp_id):
         staff_role=staff_role,
         staff_home_address=staff_home_address,
         staff_department=staff_department,
-        image_path=image_path
+        image=image
     )
     db.session.add(new_employee)
     db.session.commit()
-
     return jsonify({
         'message': "User created",
         'user': {
@@ -153,7 +163,8 @@ def register_by_id(comp_id):
         },
         'Employee': {
             'full_name': new_employee.full_name,
-            'employee_id': new_employee.com_id
+            'employee_id': new_employee.id,
+            'company_tax_number': company.tax_number  # Include the company tax number here
         }
     }), HTTP_201_CREATED
 
@@ -169,14 +180,17 @@ def get_all_employees():
     employee_list = []
     for employee in employees:
         employee_data = {
-            'id': employee.id,
+            'Employee_id': employee.id,
+            'com_id': employee.com_id,
             'full_name': employee.full_name,
             'staff_email': employee.staff_email,
             'staff_social_link': employee.staff_social_link,
             'staff_role': employee.staff_role,
             'staff_home_address': employee.staff_home_address,
             'staff_department': employee.staff_department,
-            'image_path': employee.image_path,
+            'image': employee.image,
+            'created_at': employee.created_at,
+            'updated_at': employee.updated_at
             # Add other employee attributes as needed
         }
         employee_list.append(employee_data)
@@ -187,19 +201,20 @@ def get_all_employees():
 @employee.get('/me')
 @jwt_required()
 @role_allowed(['company'])
-def get_my_employee():
+def get_my_emp_details():
     current_user_id = get_jwt_identity()
     employee = Employee.query.filter_by(user_id=current_user_id).first()
     if not employee:
         return jsonify({'error': 'Employee not found'}), HTTP_404_NOT_FOUND
     employee_data = {
+        'Employee_id': employee.id,
         'full_name': employee.full_name,
         'staff_email': employee.staff_email,
         'staff_social_link': employee.staff_social_link,
         'staff_role': employee.staff_role,
         'staff_home_address': employee.staff_home_address,
         'staff_department': employee.staff_department,
-        'image_path': employee.image_path,
+        'image': employee.image,
         # Add other employee attributes as needed
     }
     return jsonify(employee_data), HTTP_200_OK
@@ -210,14 +225,21 @@ def get_my_employee():
 @jwt_required()
 @role_allowed(['sadmin', 'company'])
 def get_my_employees():
+
     current_user_id = get_jwt_identity()
-    employees = Employee.query.filter_by(com_id=current_user_id).all()
+
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    if not company:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+    
+    employees = Employee.query.filter_by(com_id=company.id).all()
     if not employees:
         return jsonify({'message': 'No employees found for this employee'}), HTTP_404_NOT_FOUND
+    
     employees_data = []
     for employee in employees:
         employee_info = {
-            'id': employee.id,
+            'Employee_id': employee.id,
             'user_id': employee.user_id,
             'com_id': employee.com_id,
             'full_name': employee.full_name,
@@ -226,9 +248,9 @@ def get_my_employees():
             'staff_role': employee.staff_role,
             'staff_home_address': employee.staff_home_address,
             'staff_department': employee.staff_department,
-            'image_path': employee.image_path,
-            'created_at': employee.created_at.isoformat(),
-            'updated_at': employee.updated_at.isoformat()
+            'image': employee.image,
+            'created_at': employee.created_at,
+            'updated_at': employee.updated_at
             # Include other fields as needed
         }
         employees_data.append(employee_info)
@@ -244,14 +266,17 @@ def get_employee(id):
     if not employee:
         return jsonify({'error': 'Employee not found'}), HTTP_404_NOT_FOUND
     return jsonify({
-        'id': employee.id,
-        'full_name': employee.full_name,
-        'staff_email': employee.staff_email,
-        'staff_social_link': employee.staff_social_link,
-        'staff_role': employee.staff_role,
-        'staff_home_address': employee.staff_home_address,
-        'staff_department': employee.staff_department,
-        'image_path': employee.image_path
+            'Employee_id': employee.id,
+            'company_id': employee.com_id,
+            'full_name': employee.full_name,
+            'staff_email': employee.staff_email,
+            'staff_social_link': employee.staff_social_link,
+            'staff_role': employee.staff_role,
+            'staff_home_address': employee.staff_home_address,
+            'staff_department': employee.staff_department,
+            'image': employee.image,
+            'created_at': employee.created_at,
+            'updated_at': employee.updated_at
     }), HTTP_200_OK
 
 
@@ -284,7 +309,7 @@ def delete_emp(emp_id):
 @employee.patch('/edit_emp/<int:emp_id>')
 @jwt_required()
 @role_allowed(['sadmin', 'company', 'satff'])
-def editbookmark(com_id):
+def updade_emp(com_id):
     
     employee = Employee.query.filter_by(id=com_id).first()
 
@@ -396,7 +421,7 @@ def search_employees():
         if not employees:
             return jsonify({'message': 'No employees found'}), HTTP_404_NOT_FOUND
         employee_list = [{
-            'id': employee.id,
+            'Employee_id': employee.id,
             'full_name': employee.full_name,
             'staff_email': employee.staff_email,
             'staff_social_link': employee.staff_social_link,
@@ -404,8 +429,8 @@ def search_employees():
             'staff_home_address': employee.staff_home_address,
             'staff_department': employee.staff_department,
             'image': employee.image,
-            'created_at': employee.created_at.isoformat(),
-            'updated_at': employee.updated_at.isoformat()
+            'created_at': employee.created_at,
+            'updated_at': employee.updated_at
         } for employee in employees]
 
         return jsonify(employee_list), HTTP_200_OK

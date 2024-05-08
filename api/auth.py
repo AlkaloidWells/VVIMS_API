@@ -152,7 +152,7 @@ def get_user(id):
 def delete_user(id):
     current_user = get_jwt_identity()
 
-    user = User.query.filter_by(user_id=current_user, id=id).first()
+    user = User.query.filter_by(id=id).first()
 
     if not user:
         return jsonify({'message': 'Item not found'}), HTTP_404_NOT_FOUND
@@ -160,7 +160,7 @@ def delete_user(id):
     db.session.delete(user)
     db.session.commit()
 
-    return jsonify({}), HTTP_204_NO_CONTENT
+    return jsonify({"message": "User Deleted With Sucess"}), HTTP_204_NO_CONTENT
 
 
 @auth.get("/role")
