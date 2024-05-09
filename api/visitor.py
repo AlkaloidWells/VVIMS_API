@@ -9,6 +9,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from model.models import Visitor_card, Visitor, Employee, Company, com_user, db
 from utilites.checks import  role_allowed
 from sqlalchemy import or_
+from datetime import datetime
 
 visitor= Blueprint("visitor", __name__, url_prefix="/api/v1/visitor")
 
@@ -32,14 +33,14 @@ def register_visitor_by_id(comp_id):
         user_id = get_jwt_identity()
             
         # Create a new Visitor object
+        time_in_datetime = datetime.strptime(time_in, "%Y-%m-%dT%H:%M:%S")
         new_visitor = Visitor(
-            user_id = user_id,
             com_id=comp_id,
             full_name=full_name,
             address=address,
             contact_details=contact_details,
             purpose_of_visit=purpose_of_visit,
-            time_in=time_in,
+            time_in=time_in_datetime,
             badge_issued=badge_issued
         )
 
@@ -97,15 +98,14 @@ def register_visitor():
         time_in = data.get('time_in')
         badge_issued = data.get('badge_issued')
 
-
+        time_in_datetime = datetime.strptime(time_in, "%Y-%m-%dT%H:%M:%S")
         new_visitor = Visitor(
-            user_id = current_user_id,
             com_id=com_id,
             full_name=full_name,
             address=address,
             contact_details=contact_details,
             purpose_of_visit=purpose_of_visit,
-            time_in=time_in,
+            time_in=time_in_datetime,
             badge_issued=badge_issued
         )
 
@@ -271,10 +271,10 @@ def search_visitors():
             'address': visitor.address,
             'contact_details': visitor.contact_details,
             'purpose_of_visit': visitor.purpose_of_visit,
-            'time_in': visitor.time_in.isoformat(),
+            'time_in': visitor.time_in,
             'badge_issued': visitor.badge_issued,
-            'created_at': visitor.created_at.isoformat(),
-            'updated_at': visitor.updated_at.isoformat()
+            'created_at': visitor.created_at,
+            'updated_at': visitor.updated_at
         } for visitor in visitors]
 
         return jsonify(visitor_list), HTTP_200_OK
@@ -307,13 +307,13 @@ def search_visitor_cards():
             'address': visitor_card.address,
             'contact_details': visitor_card.contact_details,
             'purpose_of_visit': visitor_card.purpose_of_visit,
-            'time_in': visitor_card.time_in.isoformat(),
+            'time_in': visitor_card.time_in,
             'badge_issued': visitor_card.badge_issued,
-            'created_at': visitor_card.created_at.isoformat(),
-            'updated_at': visitor_card.updated_at.isoformat(),
+            'created_at': visitor_card.created_at,
+            'updated_at': visitor_card.updated_at,
             'surname': visitor_card.surname,
             'given_name': visitor_card.given_name,
-            'dob': visitor_card.dob.isoformat() if visitor_card.dob else None,
+            'dob': visitor_card.dob if visitor_card.dob else None,
             'pob': visitor_card.pob,
             'sex': visitor_card.sex,
             'proff': visitor_card.proff,
@@ -324,3 +324,36 @@ def search_visitor_cards():
 
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
+    
+
+
+
+
+# View All Vehicules
+@visitor.get('/all_vis')
+@role_allowed(['sadmin'])
+def get_all_visitors():
+    visitor_card = Visitor.query.all()
+    visitor_list = []
+    for visitor in visitor_card:
+        visitor_data = {
+            'id': visitor_card.id,
+            'com_id': visitor_card.com_id,
+            'full_name': visitor_card.full_name,
+            'address': visitor_card.address,
+            'contact_details': visitor_card.contact_details,
+            'purpose_of_visit': visitor_card.purpose_of_visit,
+            'time_in': visitor_card.time_in,
+            'badge_issued': visitor_card.badge_issued,
+            'created_at': visitor_card.created_at,
+            'updated_at': visitor_card.updated_at,
+            'surname': visitor_card.surname,
+            'given_name': visitor_card.given_name,
+            'dob': visitor_card.dob if visitor_card.dob else None,
+            'pob': visitor_card.pob,
+            'sex': visitor_card.sex,
+            'proff': visitor_card.proff,
+            'id_card_number': visitor_card.id_card_number
+        }
+        visitor_list.append(visitor_data)
+    return jsonify(visitor_list), HTTP_200_OK

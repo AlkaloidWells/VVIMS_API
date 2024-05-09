@@ -2,7 +2,7 @@ from os import access
 from constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_409_CONFLICT, HTTP_404_NOT_FOUND, HTTP_204_NO_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from model.models import com_user, Vehicle, Employee, db
+from model.models import com_user, Vehicle, Employee, Company, db
 from utilites.checks import  role_allowed
 
 vircul= Blueprint("vircul", __name__, url_prefix="/api/v1/vircul")
@@ -10,8 +10,25 @@ vircul= Blueprint("vircul", __name__, url_prefix="/api/v1/vircul")
 
 @vircul.post('/register')
 @jwt_required()
-@role_allowed(['company', 'staff', 'user1'])
+@role_allowed(['company', 'staff', 'user'])
 def register():
+    current_user_id = get_jwt_identity()
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    employee = Employee.query.filter_by(user_id=current_user_id).first()
+    user2 = com_user.query.filter_by(user_id=current_user_id).first()
+  
+    if company:
+        com_id = company.id
+
+    elif employee:
+        com_id = employee.com_id
+        
+    elif user2:
+        com_id = user2.com_id
+            
+    else:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+    
     try:
         data = request.get_json()
         required_fields = ['plate_number', 'make', 'model', 'color', 'owner_details', 'entry_time']
@@ -130,11 +147,11 @@ def get_vircul_by_id(vircul_id):
             'model': vircul.model,
             'color': vircul.color,
             'owner_details': vircul.owner_details,
-            'entry_time': vircul.entry_time.isoformat(),
-            'exit_time': vircul.exit_time.isoformat() if vircul.exit_time else None,
+            'entry_time': vircul.entry_time,
+            'exit_time': vircul.exit_time if vircul.exit_time else None,
             'flagged_as_suspicious': vircul.flagged_as_suspicious,
-            'created_at': vircul.created_at.isoformat(),
-            'updated_at': vircul.updated_at.isoformat()
+            'created_at': vircul.created_at,
+            'updated_at': vircul.updated_at
         }), HTTP_200_OK
     else:
         return jsonify({'message': 'Vehicule not found'}), HTTP_404_NOT_FOUND
@@ -154,11 +171,11 @@ def get_all_virculs():
             'model': vircul.model,
             'color': vircul.color,
             'owner_details': vircul.owner_details,
-            'entry_time': vircul.entry_time.isoformat(),
-            'exit_time': vircul.exit_time.isoformat() if vircul.exit_time else None,
+            'entry_time': vircul.entry_time,
+            'exit_time': vircul.exit_time if vircul.exit_time else None,
             'flagged_as_suspicious': vircul.flagged_as_suspicious,
-            'created_at': vircul.created_at.isoformat(),
-            'updated_at': vircul.updated_at.isoformat()
+            'created_at': vircul.created_at,
+            'updated_at': vircul.updated
         }
         vircul_list.append(vircul_data)
     return jsonify(vircul_list), HTTP_200_OK
@@ -210,11 +227,11 @@ def get_virculs_by_company(com_id):
                 'model': vircul.model,
                 'color': vircul.color,
                 'owner_details': vircul.owner_details,
-                'entry_time': vircul.entry_time.isoformat(),
-                'exit_time': vircul.exit_time.isoformat() if vircul.exit_time else None,
+                'entry_time': vircul.entry_time,
+                'exit_time': vircul.exit_time if vircul.exit_time else None,
                 'flagged_as_suspicious': vircul.flagged_as_suspicious,
-                'created_at': vircul.created_at.isoformat(),
-                'updated_at': vircul.updated_at.isoformat()
+                'created_at': vircul.created_at,
+                'updated_at': vircul.updated_at
             }
             vircul_list.append(vircul_data)
         return jsonify(vircul_list), HTTP_200_OK

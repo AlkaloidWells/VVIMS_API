@@ -90,7 +90,7 @@ class Visitor(db.Model):
     contact_details = db.Column(db.String(50), nullable=False)
     purpose_of_visit = db.Column(db.String(200), nullable=False)
     time_in = db.Column(db.DateTime, nullable=False)
-    badge_issued = db.Column(db.Boolean, default=False)
+    badge_issued = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
     updated_at = db.Column(db.DateTime, onupdate=datetime.now())
 
