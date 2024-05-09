@@ -178,68 +178,46 @@ def update_visitor_by_id(visitor_id):
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
 
-# Register Visitor Card API
-@visitor.post('/register_card/int:visitor_id>')
-@jwt_required(id)
-@role_allowed(['sadmin', 'company', 'staff'])
-def register_visitor_card():
-    try:
-        data = request.json
-        surname = data.get('surname')
-        given_name = data.get('given_name')
-        dob = data.get('dob')
-        pob = data.get('pob')
-        sex = data.get('sex')
-        proff = data.get('proff')
-        id_card_number = data.get('id_card_number')
-
-        if not all([surname, given_name, dob, pob, sex, proff, id_card_number]):
-            return jsonify({'error': 'Missing required fields'}), HTTP_400_BAD_REQUEST
-
-        new_visitor_card = Visitor_card(surname=surname, 
-                                        given_name=given_name,
-                                        dob=dob, pob=pob, 
-                                        sex=sex, 
-                                        proff=proff, 
-                                        id_card_number=id_card_number)
-        
-        db.session.add(new_visitor_card)
-        db.session.commit()
-
-        return jsonify({'message': 'Visitor card registered successfully', 'visitor_card': new_visitor_card}), HTTP_201_CREATED
-    except Exception as e:
-        return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
-
-
-# Update Visitor API
+# Update Visitor Card API
 @visitor.put('/update_card/<int:visitor_id>')
 @jwt_required()
 @role_allowed(['sadmin', 'company', 'staff'])
 def update_visitor_card(visitor_id):
     try:
         data = request.get_json()
-        visitor = Visitor.query.get(visitor_id)
+        visitor_card = Visitor_card.query.get(visitor_id)
 
-        if not visitor:
-            return jsonify({'error': 'Visitor not found'}), HTTP_404_NOT_FOUND
+        if not visitor_card:
+            return jsonify({'error': 'Visitor card not found'}), HTTP_404_NOT_FOUND
 
-        # Update visitor data
-        visitor.full_name = data.get('full_name', visitor.full_name)
-        visitor.date_of_birth = data.get('date_of_birth', visitor.date_of_birth)
-        visitor.sex = data.get('sex', visitor.sex)
-        visitor.id_card_number = data.get('id_card_number', visitor.id_card_number)
+        # Update visitor card data
+        visitor_card.surname = data.get('surname', visitor_card.surname)
+        visitor_card.given_name = data.get('given_name', visitor_card.given_name)
+        
+        # Convert date string to Python date object
+        dob_str = data.get('dob')
+        if dob_str:
+            visitor_card.dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
+        
+        visitor_card.pob = data.get('pob', visitor_card.pob)
+        visitor_card.sex = data.get('sex', visitor_card.sex)
+        visitor_card.proff = data.get('proff', visitor_card.proff)
+        visitor_card.id_card_number = data.get('id_card_number', visitor_card.id_card_number)
 
         db.session.commit()
 
-        # Return updated visitor details
-        updated_visitor = {
-            'full_name': visitor.full_name,
-            'date_of_birth': visitor.date_of_birth,
-            'sex': visitor.sex,
-            'id_card_number': visitor.id_card_number
+        # Return updated visitor card details
+        updated_visitor_card = {
+            'surname': visitor_card.surname,
+            'given_name': visitor_card.given_name,
+            'dob': visitor_card.dob.isoformat() if visitor_card.dob else None,
+            'pob': visitor_card.pob,
+            'sex': visitor_card.sex,
+            'proff': visitor_card.proff,
+            'id_card_number': visitor_card.id_card_number
         }
 
-        return jsonify({'message': 'Visitor updated successfully', 'visitor': updated_visitor}), HTTP_200_OK
+        return jsonify({'message': 'Visitor card updated successfully', 'visitor_card': updated_visitor_card}), HTTP_200_OK
     except Exception as e:
         return jsonify({'error': str(e)}), HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -331,29 +309,116 @@ def search_visitor_cards():
 
 # View All Vehicules
 @visitor.get('/all_vis')
+@jwt_required()
 @role_allowed(['sadmin'])
 def get_all_visitors():
-    visitor_card = Visitor.query.all()
+    visitor_card = Visitor_card.query.all()
     visitor_list = []
     for visitor in visitor_card:
         visitor_data = {
-            'id': visitor_card.id,
-            'com_id': visitor_card.com_id,
-            'full_name': visitor_card.full_name,
-            'address': visitor_card.address,
-            'contact_details': visitor_card.contact_details,
-            'purpose_of_visit': visitor_card.purpose_of_visit,
-            'time_in': visitor_card.time_in,
-            'badge_issued': visitor_card.badge_issued,
-            'created_at': visitor_card.created_at,
-            'updated_at': visitor_card.updated_at,
-            'surname': visitor_card.surname,
-            'given_name': visitor_card.given_name,
-            'dob': visitor_card.dob if visitor_card.dob else None,
-            'pob': visitor_card.pob,
-            'sex': visitor_card.sex,
-            'proff': visitor_card.proff,
-            'id_card_number': visitor_card.id_card_number
+            'id': visitor.id,
+            'com_id': visitor.com_id,
+            'full_name': visitor.full_name,
+            'address': visitor.address,
+            'contact_details': visitor.contact_details,
+            'purpose_of_visit': visitor.purpose_of_visit,
+            'time_in': visitor.time_in,
+            'badge_issued': visitor.badge_issued,
+            'created_at': visitor.created_at,
+            'updated_at': visitor.updated_at,
+            'surname': visitor.surname,
+            'given_name': visitor.given_name,
+            'dob': visitor.dob,
+            'pob': visitor.pob,
+            'sex': visitor.sex,
+            'proff': visitor.proff,
+            'id_card_number': visitor.id_card_number
         }
         visitor_list.append(visitor_data)
     return jsonify(visitor_list), HTTP_200_OK
+
+
+
+# View my visitors
+@visitor.get('/my_visitors')
+@jwt_required()
+@role_allowed(['company', 'staff', 'user'])
+def get_my_visitor():
+    current_user_id = get_jwt_identity()
+
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    employee = Employee.query.filter_by(user_id=current_user_id).first()
+    user2 = com_user.query.filter_by(user_id=current_user_id).first()
+  
+    if company:
+        com_id = company.id
+    elif employee:
+        com_id = employee.com_id
+    elif user2:
+        com_id = user2.com_id
+    else:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+
+    visitor_cards = Visitor_card.query.filter_by(com_id=com_id).all()
+    
+    if visitor_cards:
+        visitor_list = []
+        for visitor in visitor_cards:
+            visitor_data = {
+                'id': visitor.id,
+                'com_id': visitor.com_id,
+                'full_name': visitor.full_name,
+                'address': visitor.address,
+                'contact_details': visitor.contact_details,
+                'purpose_of_visit': visitor.purpose_of_visit,
+                'time_in': visitor.time_in,
+                'badge_issued': visitor.badge_issued,
+                'created_at': visitor.created_at,
+                'updated_at': visitor.updated_at,
+                'surname': visitor.surname,
+                'given_name': visitor.given_name,
+                'dob': visitor.dob,
+                'pob': visitor.pob,
+                'sex': visitor.sex,
+                'proff': visitor.proff,
+                'id_card_number': visitor.id_card_number
+            }
+            visitor_list.append(visitor_data)
+        return jsonify(visitor_list), HTTP_200_OK
+    else:
+        return jsonify({'message': 'No Visitors found for this company'}), HTTP_404_NOT_FOUND
+
+    
+
+#view visitors by company id
+@visitor.get('/by_company/<int:com_id>')
+@jwt_required()
+@role_allowed(['sadmin'])
+def get_visitor_by_company(com_id):
+    visitor_card = Visitor_card.query.filter_by(com_id=com_id).all()
+    if visitor:
+        visitor_list = []
+        for visitor in visitor_card:
+            visitor_data = {
+            'id': visitor.id,
+            'com_id': visitor.com_id,
+            'full_name': visitor.full_name,
+            'address': visitor.address,
+            'contact_details': visitor.contact_details,
+            'purpose_of_visit': visitor.purpose_of_visit,
+            'time_in': visitor.time_in,
+            'badge_issued': visitor.badge_issued,
+            'created_at': visitor.created_at,
+            'updated_at': visitor.updated_at,
+            'surname': visitor.surname,
+            'given_name': visitor.given_name,
+            'dob': visitor.dob,
+            'pob': visitor.pob,
+            'sex': visitor.sex,
+            'proff': visitor.proff,
+            'id_card_number': visitor.id_card_number
+            }
+            visitor_list.append(visitor_data)
+        return jsonify(visitor_list), HTTP_200_OK
+    else:
+        return jsonify({'message': 'No Vehicules found for this company'}), HTTP_404_NOT_FOUND

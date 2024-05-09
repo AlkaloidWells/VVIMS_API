@@ -136,6 +136,7 @@ def register_by_id(vic_id):
 
 # View Vehicule by ID
 @vircul.get('/<int:vircul_id>')
+@jwt_required()
 def get_vircul_by_id(vircul_id):
     vircul = Vehicle.query.get(vircul_id)
     if vircul:
@@ -158,6 +159,7 @@ def get_vircul_by_id(vircul_id):
 
 # View All Vehicules
 @vircul.get('/all_vec')
+@jwt_required()
 @role_allowed(['sadmin'])
 def get_all_virculs():
     virculs = Vehicle.query.all()
@@ -182,6 +184,7 @@ def get_all_virculs():
 
 # Delete Vehicule
 @vircul.delete('/delete_vic/<int:vircul_id>')
+@jwt_required()
 def delete_vircul(vircul_id):
     vircul = Vehicle.query.get(vircul_id)
     if vircul:
@@ -193,6 +196,7 @@ def delete_vircul(vircul_id):
 
 # Update Vehicule
 @vircul.put('/update_vec/<int:vircul_id>')
+@jwt_required()
 def update_vircul(vircul_id):
     vircul = Vehicle.query.get(vircul_id)
     if not vircul:
@@ -213,6 +217,7 @@ def update_vircul(vircul_id):
 
 # View Vehicules by Company using com_id
 @vircul.get('/by_company/<int:com_id>')
+@jwt_required()
 @role_allowed(['sadmin', 'company', 'staff', 'user'])
 def get_virculs_by_company(com_id):
     virculs = Vehicle.query.filter_by(com_id=com_id).all()
@@ -237,3 +242,54 @@ def get_virculs_by_company(com_id):
         return jsonify(vircul_list), HTTP_200_OK
     else:
         return jsonify({'message': 'No Vehicules found for this company'}), HTTP_404_NOT_FOUND
+
+
+
+# View my vircules
+@vircul.get('/my_vircules')
+@jwt_required()
+@role_allowed(['company', 'staff', 'user'])
+def get_my_vircule():
+    current_user_id = get_jwt_identity()
+
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    employee = Employee.query.filter_by(user_id=current_user_id).first()
+    user2 = com_user.query.filter_by(user_id=current_user_id).first()
+  
+    if company:
+        com_id = company.id
+    elif employee:
+        com_id = employee.com_id
+    elif user2:
+        com_id = user2.com_id
+    else:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+
+    vircule_cards = Vehicle.query.filter_by(com_id=com_id).all()
+    
+    if vircule_cards:
+        vircule_list = []
+        for vircule in vircule_cards:
+            vircule_data = {
+                'id': vircule.id,
+                'com_id': vircule.com_id,
+                'full_name': vircule.full_name,
+                'address': vircule.address,
+                'contact_details': vircule.contact_details,
+                'purpose_of_visit': vircule.purpose_of_visit,
+                'time_in': vircule.time_in,
+                'badge_issued': vircule.badge_issued,
+                'created_at': vircule.created_at,
+                'updated_at': vircule.updated_at,
+                'surname': vircule.surname,
+                'given_name': vircule.given_name,
+                'dob': vircule.dob,
+                'pob': vircule.pob,
+                'sex': vircule.sex,
+                'proff': vircule.proff,
+                'id_card_number': vircule.id_card_number
+            }
+            vircule_list.append(vircule_data)
+        return jsonify(vircule_list), HTTP_200_OK
+    else:
+        return jsonify({'message': 'No vircules found for this company'}), HTTP_404_NOT_FOUND
