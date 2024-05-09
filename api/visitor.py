@@ -6,7 +6,7 @@ from constants.http_status_codes import (HTTP_200_OK, HTTP_201_CREATED,
 
 from flask import Blueprint, app, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from model.models import Visitor_card, Visitor, Employee, com_user, db
+from model.models import Visitor_card, Visitor, Employee, Company, com_user, db
 from utilites.checks import  role_allowed
 from sqlalchemy import or_
 
@@ -68,8 +68,26 @@ def register_visitor_by_id(comp_id):
 
 @visitor.post('/register')
 @jwt_required()
-@role_allowed(['sadmin', 'company', 'staff', 'user'])
+@role_allowed(['company','staff', 'user'])
 def register_visitor():
+    current_user_id = get_jwt_identity()
+
+    company = Company.query.filter_by(user_id=current_user_id).first()
+    employee = Employee.query.filter_by(user_id=current_user_id).first()
+    user2 = com_user.query.filter_by(user_id=current_user_id).first()
+  
+    if company:
+        com_id = company.id
+
+    elif employee:
+        com_id = employee.com_id
+        
+    elif user2:
+        com_id = user2.com_id
+            
+    else:
+        return jsonify({'error': 'Company not found'}), HTTP_404_NOT_FOUND
+    
     try:
         data = request.get_json()
         full_name = data.get('full_name')
@@ -79,27 +97,10 @@ def register_visitor():
         time_in = data.get('time_in')
         badge_issued = data.get('badge_issued')
 
-        # Get user ID from JWT token
-        user_id = get_jwt_identity()
 
-        # Query company ID associated with the user
-        user_id = get_jwt_identity()
-
-        cum2 = Employee.query.filter_by(id=user_id).first()
-        cum3 = com_user.query.filter_by(id=user_id).first()
-        if cum2:
-            com1_id = cum2.com_id
-        
-        elif cum3:
-            com1_id = cum3.com_id
-
-        else:
-            com1_id = user_id
-            
-        # Create a new Visitor object
         new_visitor = Visitor(
-            user_id = user_id,
-            com_id=com1_id,
+            user_id = current_user_id,
+            com_id=com_id,
             full_name=full_name,
             address=address,
             contact_details=contact_details,
@@ -178,8 +179,8 @@ def update_visitor_by_id(visitor_id):
 
 
 # Register Visitor Card API
-@visitor.post('/register_card')
-@jwt_required()
+@visitor.post('/register_card/int:visitor_id>')
+@jwt_required(id)
 @role_allowed(['sadmin', 'company', 'staff'])
 def register_visitor_card():
     try:
